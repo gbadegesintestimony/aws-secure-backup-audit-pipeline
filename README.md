@@ -13,21 +13,36 @@ My solution combined private AWS networking, a tightly scoped EC2 IAM role, Linu
 ## Architecture
 
 ```mermaid
-flowchart LR
-    User[Administrator] -->|SSH from allowed IP| Bastion
+flowchart TD
+    User["Administrator"] -->|SSH from allowed IP| Bastion
+
     subgraph VPC["AWS VPC · 10.0.0.0/16"]
-        subgraph Public[Public subnet]
-            Bastion[Bastion EC2]
+        subgraph Public["Public subnet"]
+            Bastion["Bastion EC2"]
         end
-        subgraph Private[Private subnet]
-            App[Application EC2 · No public IP]
+        subgraph Private["Private subnet"]
+            App["Application EC2<br/>(No public IP)"]
         end
-        Bastion -->|SSH restricted to bastion SG| App
-        App -->|Upload with instance role| S3Endpoint[S3 Gateway Endpoint]
+        Bastion -->|SSH restricted<br/>to bastion SG| App
+        App -->|Upload with<br/>instance role| S3Endpoint["S3 Gateway Endpoint"]
     end
-    S3Endpoint --> Bucket[(Private S3 bucket · backups/*)]
-    Bucket -->|ObjectCreated:Put · backups/| Lambda[Lambda audit function]
-    Lambda -->|PutItem| Dynamo[(DynamoDB · backup-log)]
+
+    S3Endpoint --> Bucket[("Private S3 bucket<br/>(backups/*)")]
+    Bucket -->|ObjectCreated:Put<br/>(backups/)| Lambda["Lambda audit function"]
+    Lambda -->|dynamodb:PutItem| Dynamo[("DynamoDB<br/>(backup-log)")]
+
+    %% Styling
+    classDef compute fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#78350f;
+    classDef storage fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d;
+    classDef database fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a;
+    classDef network fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87;
+    classDef user fill:#f1f5f9,stroke:#64748b,stroke-width:2px,color:#0f172a;
+
+    class User user;
+    class Bastion,App,Lambda compute;
+    class Bucket storage;
+    class Dynamo database;
+    class S3Endpoint network;
 ```
 
 The bastion is the SSH entry point. The application EC2 instance resides in the private subnet. The **S3 Gateway Endpoint** gives that instance a path to S3 after the temporary NAT Gateway is deleted. An S3 upload event invokes Lambda, which writes metadata to DynamoDB. **There is no EC2 Instance Connect Endpoint or DynamoDB Gateway Endpoint in this design.**
