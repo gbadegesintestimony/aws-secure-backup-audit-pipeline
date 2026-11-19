@@ -12,7 +12,7 @@ My solution combined private AWS networking, a tightly scoped EC2 IAM role, Linu
 
 ## Architecture
 
-![Architecture Diagram](architecture/architecture.png)
+![Architecture Diagram](architecture/architecture.svg)
 
 The bastion is the SSH entry point. The application EC2 instance resides in the private subnet. The **S3 Gateway Endpoint** gives that instance a path to S3 after the temporary NAT Gateway is deleted. An S3 upload event invokes Lambda, which writes metadata to DynamoDB. **There is no EC2 Instance Connect Endpoint or DynamoDB Gateway Endpoint in this design.**
 
@@ -25,7 +25,7 @@ See the editable [architecture source](architecture/architecture.mmd) for the sa
 | VPC, subnets, routes, security groups | Isolate the app instance and restrict SSH access |
 | Bastion EC2 | Provide controlled SSH access to the private instance |
 | Private application EC2 | Generate logs and create backup archives |
-| Temporary NAT Gateway | Support initial software installation; removed afterward |
+| Tempoarary NAT Gateway | Support initial software installation; removed afterward |
 | S3 Gateway Endpoint | Route private-subnet S3 traffic without permanent NAT |
 | IAM instance role | Allow only `s3:PutObject` under the backup prefix |
 | Amazon S3 | Store timestamped compressed backup archives |
