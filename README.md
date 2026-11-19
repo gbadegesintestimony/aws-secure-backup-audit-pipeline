@@ -121,7 +121,7 @@ This was an assessment implementation, not production-ready backup infrastructur
 
 ## Article
 
-**Medium walkthrough:** Link will be added after publication and public-access verification.
+**Medium Link** (https://medium.com/@testyfresh/building-a-secure-and-automated-aws-backup-pipeline-with-ec2-s3-lambda-and-dynamodb-bd883e98103b)
 
 ## Reuse and limitations
 
