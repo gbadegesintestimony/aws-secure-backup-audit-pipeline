@@ -1,0 +1,15 @@
+flowchart LR
+  Admin[Administrator] -->|SSH from restricted IP| Bastion
+  subgraph VPC["AWS VPC 10.0.0.0/16"]
+    subgraph Public[Public subnet]
+      Bastion[Bastion EC2]
+    end
+    subgraph Private[Private subnet]
+      App[Private application EC2\nNo public IP]
+    end
+    Bastion -->|SSH via security group| App
+    App -->|Upload using IAM role| Endpoint[S3 Gateway VPC Endpoint]
+  end
+  Endpoint --> S3[(Private S3 bucket\nbackups/*)]
+  S3 -->|ObjectCreated:Put\nPrefix backups/| Lambda[Lambda audit function]
+  Lambda -->|dynamodb:PutItem| Table[(DynamoDB backup-log)]

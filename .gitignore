@@ -1,0 +1,25 @@
+# Credentials and account-specific configuration
+*.pem
+*.key
+*.p12
+.env
+.env.*
+!.env.example
+karatu-backup.env
+aws_access_key*
+credentials
+.aws/
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# OS/editors/runtime
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+__pycache__/
+*.pyc
+*.log
+*.tar.gz
+*.zip

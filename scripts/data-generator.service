@@ -1,0 +1,15 @@
+# RECONSTRUCTED TEMPLATE (not the exported deployed unit)
+# Behavior matches the systemd status and app.log evidence in the assessment.
+[Unit]
+Description=Karatu Application Data Generator
+After=local-fs.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/bin/bash -c 'while true; do /usr/bin/date -Is >> /var/app/data/app.log; /usr/bin/sleep 30; done'
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,6 @@
+# Observed root crontab entry from completed Karatu lab (historical deployment):
+*/10 * * * * /usr/bin/bash /usr/local/bin/backup.sh
+
+# NOTE: The public backup.sh is sanitized to require BACKUP_BUCKET in its environment.
+# For a fresh deployment, configure /etc/karatu-backup.env and use the example
+# wrapper schedule explained in docs/USAGE.md instead of the historical line.
