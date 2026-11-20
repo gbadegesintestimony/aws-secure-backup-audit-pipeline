@@ -12,7 +12,7 @@ My solution combined private AWS networking, a tightly scoped EC2 IAM role, Linu
 
 ## Architecture
 
-![Architecture Diagram](architecture/architecture.svg)
+![Architecture Overview](architecture/architecture.png)
 
 The bastion is the SSH entry point. The application EC2 instance resides in the private subnet. The **S3 Gateway Endpoint** gives that instance a path to S3 after the temporary NAT Gateway is deleted. An S3 upload event invokes Lambda, which writes metadata to DynamoDB. **There is no EC2 Instance Connect Endpoint or DynamoDB Gateway Endpoint in this design.**
 
