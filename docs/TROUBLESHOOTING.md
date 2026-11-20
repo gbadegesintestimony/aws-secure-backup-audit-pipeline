@@ -44,7 +44,35 @@ DynamoDB does not allow modifying an existing table's partition key schema in pl
 - **Verify behavioral flow, not just resource status:** A green status on a DynamoDB table and successful S3 uploads do not guarantee that the integration contract between them is functioning.
 - **Inspect CloudWatch first for silent serverless failures:** Because Lambda runs asynchronously in response to S3 events, failures will fail silently from the caller's perspective without CloudWatch monitoring.
 
+## Bastion SSH access failure: Dynamic client IP reassignment
+
+### Symptom
+Attempts to connect to the public bastion host (`44.202.190.63`) via SSH from a local Vagrant environment failed with:
+```text
+ssh: connect to host 44.202.190.63 port 22: Connection refused
+```
+
+### Triage & diagnosis
+A systematic check across the networking and compute layers was performed:
+1. **EC2 Instance State:** Verified in the AWS EC2 Console that `karatu-bastion-host` (`i-0799e19229185cfa4`) was in `running` state with 2/2 status checks passed.
+2. **OS Service Status:** Checked the EC2 System Log to confirm that `sshd` had initialized and was actively listening on port 22.
+3. **Network ACLs:** Verified that the subnet's VPC Network ACL (`acl-0dbb9136d5a907733`) correctly allowed inbound and outbound traffic.
+4. **Client IP Check:** Ran `curl -s ifconfig.me` from the local terminal to inspect the source public IP.
+
+### Root cause
+The local ISP dynamically reassigned the client's public IP address from `41.242.65.170` to `105.127.9.124`. Because the bastion host security group (`karatu-bastion-sg`) was strictly locked down to a single `/32` CIDR rule (`41.242.65.170/32`) following least-privilege principles, the new IP address was blocked at the security group boundary.
+
+### Resolution
+1. **Updated Inbound Rule:** Updated the Port 22 SSH ingress rule in `karatu-bastion-sg` to the newly assigned IP: `105.127.9.124/32`.
+2. **Reloaded SSH Agent:** Reloaded the keypair into `ssh-agent` (`ssh-add Myweb-kp.pem`) to ensure SSH agent forwarding functioned for the second hop.
+3. **Verification:** Reconnected via SSH to the bastion (`44.202.190.63`), then hopped directly to the private application EC2 instance (`10.0.2.47`), confirming end-to-end access was restored.
+
+### Key takeaways
+- **Least privilege vs. dynamic IPs:** Restricting management ports to `/32` is an essential cloud security control, but requires updating when operating behind dynamic residential/ISP connections.
+- **Layered triage:** Checking compute state (`running`), daemon logs (`sshd`), VPC NACLs, and Security Group rules in sequence isolates network boundary drops from server failure.
+
 ## When adapting code
+- Bastion SSH connection failed or timed out? Check if your dynamic public IP has changed (`curl -s ifconfig.me`) and update the `/32` ingress rule in the bastion security group.
 - Missing `AccessDenied` on delete? Audit effective IAM permissions and bucket policy.
 - Upload timeout after NAT removal? Check S3 Gateway Endpoint service, Region, private route table and outbound connectivity.
 - Lambda invoked but no audit row? Inspect its CloudWatch logs, `dynamodb:PutItem` permission, table Region/name, and schema attribute casing/hyphenation (e.g., `backup-id` vs `backup_id`).
